@@ -61,13 +61,20 @@ Before configuring the collection you will require below items
 
 1. Access to the existing kubernetes cluster where strimzi cluster operator is deployed. If not done you can follow the strimzi [documentation](https://strimzi.io/docs/operators/latest/deploying.html#con-strimzi-installation-methods_str).
 
+2. Make sure the log pattern is set to below pattern by modifying the **strimzi-cluster-operator** [config map](https://github.com/strimzi/strimzi-kafka-operator/blob/main/install/cluster-operator/050-ConfigMap-strimzi-cluster-operator.yaml) using instructions under **Strimzi Cluster Operator** section in this [page](https://strimzi.io/blog/2020/11/10/dynamically-changeable-logging/).
+
+  `appender.console.layout.pattern = [%d] %p %m (%c)%n`
+
+  <img src={useBaseUrl('img/integrations/containers-orchestration/strimzi-cluster-operator-log4j2.png')} alt="log4j2 properties"/>
+
+
 2. Namespace where all the kafka pods will be created or are already deployed.
 
 3. Download the [kafka-metrics-sumologic-telegraf.yaml](https://drive.google.com/file/d/1pvMqYiJu7_nEv2F2RsPKIn_WWs8BKcxQ/view?usp=sharing). If you already have an existing yaml, you will have to merge the contents of both the files. This file contains the Kafka resource.
 
 ### Deploying Sumo Logic Kubernetes Collection
 
-1. Create a new namespace to deploy resources. The below command creates a **sumologiccollection** namespace.
+1. Create a new namespace to deploy sumologic helm chart. The below command creates a **sumologiccollection** namespace.
 
   ```bash
   kubectl create ns sumologiccollection
@@ -96,7 +103,7 @@ Before configuring the collection you will require below items
 
 Follow these steps to collect metrics from a Kubernetes environment:
 
-1. **Preparing custom image for running Kafka with Jolokia agent**
+1. **Building custom image for running Kafka with Jolokia agent**
 
   Strimzi operator does not support jolokia agent out of the box so we need to update the kafka image. To Build kafka pod image follow below instructions:
 
@@ -116,8 +123,8 @@ Follow these steps to collect metrics from a Kubernetes environment:
           docker tag "kafka:kafka-3.4.0" public.ecr.aws/g0d6f4n6/strimzi-kafka-jolokia:kafka-3.4.0
         ```
     5. Push the images in your container repository. Strimzi supports both private container registries as well as public registries.You can either configure image pull secrets at the [Cluster operator level](https://strimzi.io/docs/operators/latest/full/using.html#ref-operator-cluster-str) or in the [PodTemplate section](https://strimzi.io/docs/operators/latest/full/using.html#type-PodTemplate-reference).
-
-2. Update the `<<IMAGE_TAG>>` in **kafka-metrics-sumologic-telegraf.yaml** file downloaded earlier.
+    6. Get the image uri from your container repository.
+    7. Update the `<<IMAGE_TAG>>` in **kafka-metrics-sumologic-telegraf.yaml** file downloaded earlier in prerequisites section.
 
 3. **Add annotations on your Kafka pods**
 
