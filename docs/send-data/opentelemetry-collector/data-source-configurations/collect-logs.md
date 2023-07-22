@@ -40,13 +40,14 @@ receivers:
       - /var/log/syslog
       - /var/log/audit/audit.log
     include_file_name: false
-    include_file_path_resolved: true
-    storage: file_storage
+    include_file_path: true
+    start_at: beginning
+    operators:
+      - type: move
+        from: attributes["log.file.path"]
+        to: resource["log.file.path"]
 
 processors:
-  groupbyattrs/custom_files:
-    keys:
-      - log.file.path_resolved
   resource/custom_files:
     attributes:
       - key: _sourceCategory
@@ -60,7 +61,6 @@ service:
         - filelog/custom_files
       processors:
         - memory_limiter
-        - groupbyattrs/custom_files
         - resource/custom_files
         - resourcedetection/system
         - batch
@@ -72,7 +72,7 @@ service:
 2. Paste the above content.
 3. Restart collector with following command:
    ```bash title="Linux"
-   systemctl restart otelcol-sumo
+   sudo systemctl restart otelcol-sumo
    ```
    ```bash title="Windows"
    Restart-Service -Name OtelcolSumo
@@ -83,11 +83,9 @@ Configuration details:
 * **receivers**:
   * `filelog/custom_files:` Unique name defined for the filelog receiver. You can add multiple filelog receivers as `filelog/2`, `filelog/prod` etc.
     * `include` Lets the Filelog receiver know where the log files are placed. Make sure that the collector has permissions to read the files; otherwise, the logs will not be collected.
-    * `include_file_path_resolved: true` Adds a `log.file.path_resolved` attribute to the logs that contain the whole path of the file.
-    * `storage: file_storage` Prevents the receiver from reading the same data over and over again on each otelcol restart. The `file_storage` extension is defined in the default `/etc/otelcol-sumo/sumologic.yaml` file.
+    
 
 * **processors**:
-  * `groupbyattrs/custom_files` Moves the `log.file.path_resolved` attribute from log record level to resource level to reduce data duplication.
   * `resource/custom_files` Adds the `_sourceCategory` resource attribute with value `application_logs_prod`.
 
 * **exporters**:
@@ -269,7 +267,7 @@ service:
 2. Paste the above content to `local_syslog.yaml`
 3. Restart collector with following command:
    ```bash title="Linux"
-   systemctl restart otelcol-sumo
+   sudo systemctl restart otelcol-sumo
    ```
 
 For more details, see the [Syslog receiver][syslog_receiver_docs].
@@ -317,7 +315,7 @@ service:
 2. Paste the above content to `tcp_udp_log.yaml`
 3. Restart collector with following command:
    ```bash title="Linux"
-   systemctl restart otelcol-sumo
+   sudo systemctl restart otelcol-sumo
    ```
 
 For more details, see the [TCP Log][tcp_log_receiver_docs] or [UDP Log][udp_log_receiver_docs] receiver.
